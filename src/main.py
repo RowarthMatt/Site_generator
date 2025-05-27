@@ -1,8 +1,10 @@
 from textnode import *
+from htmlnode import *
 
 def main():
-    textnode = TextNode("test", TextType.ITALIC, "some url")
+    node = TextNode("This is a text node", TextType.TEXT)
+    html_node = text_node_to_html_node(node)
 
-    print(textnode)
+    print(html_node.to_html())
 
 main()
