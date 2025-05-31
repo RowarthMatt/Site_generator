@@ -40,37 +40,56 @@ def extract_markdown_links(text):
 def split_nodes_link(old_nodes):
     new_nodes = []
     for node in old_nodes:
-        link_nodes = extract_markdown_links(node.text)
-        start = 0
-        end = 0
-        for i in range(len(link_nodes)):
-            end = node.text.find(link_nodes[i][0])-1
-            if end != start:
-                text = node.text[start:end]
-                new_nodes.append(TextNode(text,TextType.TEXT))
-            new_nodes.append(TextNode(link_nodes[i][0],TextType.LINK,link_nodes[i][1]))
-            start = end + len(link_nodes[i][0]) + len(link_nodes[i][1]) + 4
-        if start < len(node.text):
-            text = node.text[start:]
-            new_nodes.append(TextNode(text, TextType.TEXT))
+        if node.text_type == TextType.TEXT:
+            link_nodes = extract_markdown_links(node.text)
+            start = 0
+            end = 0
+            for i in range(len(link_nodes)):
+                end = node.text.find(link_nodes[i][0])-1
+                if end != start:
+                    text = node.text[start:end]
+                    new_nodes.append(TextNode(text,TextType.TEXT))
+                new_nodes.append(TextNode(link_nodes[i][0],TextType.LINK,link_nodes[i][1]))
+                start = end + len(link_nodes[i][0]) + len(link_nodes[i][1]) + 4
+            if start < len(node.text):
+                text = node.text[start:]
+                new_nodes.append(TextNode(text, TextType.TEXT))
+        else:
+            new_nodes.append(node)
 
     return new_nodes
 
 def split_nodes_image(old_nodes):
     new_nodes = []
     for node in old_nodes:
-        image_nodes = extract_markdown_images(node.text)
-        start = 0
-        end = 0
-        for i in range(len(image_nodes)):
-            end = node.text.find(image_nodes[i][0])-2
-            if end != start:
-                text = node.text[start:end]
-                new_nodes.append(TextNode(text,TextType.TEXT))
-            new_nodes.append(TextNode(image_nodes[i][0],TextType.IMAGE,image_nodes[i][1]))
-            start = end + len(image_nodes[i][0]) + len(image_nodes[i][1]) + 5
-        if start < len(node.text):
-            text = node.text[start:]
-            new_nodes.append(TextNode(text, TextType.TEXT))
+        if node.text_type == TextType.TEXT:
+            image_nodes = extract_markdown_images(node.text)
+            start = 0
+            end = 0
+            for i in range(len(image_nodes)):
+                end = node.text.find(image_nodes[i][0])-2
+                if end != start:
+                    text = node.text[start:end]
+                    new_nodes.append(TextNode(text,TextType.TEXT))
+                new_nodes.append(TextNode(image_nodes[i][0],TextType.IMAGE,image_nodes[i][1]))
+                start = end + len(image_nodes[i][0]) + len(image_nodes[i][1]) + 5
+            if start < len(node.text):
+                text = node.text[start:]
+                new_nodes.append(TextNode(text, TextType.TEXT))
+        else:
+            new_nodes.append(node)
 
     return new_nodes
+
+def text_to_textnodes(text):
+    new_nodes = [TextNode(text, TextType.TEXT)]
+    new_nodes = split_nodes_delimiter(new_nodes, "**", TextType.BOLD)
+    new_nodes = split_nodes_delimiter(new_nodes, "_", TextType.ITALIC)
+    new_nodes = split_nodes_delimiter(new_nodes, "`", TextType.CODE)
+    new_nodes = split_nodes_image(new_nodes)
+    new_nodes = split_nodes_link(new_nodes)
+
+
+
+    return new_nodes
+
