@@ -1,67 +1,57 @@
 from enum import Enum
+
 from htmlnode import ParentNode
 from inline_markdown import text_to_textnodes
 from textnode import text_node_to_html_node, TextNode, TextType
-import re
+
 
 class BlockType(Enum):
     PARAGRAPH = "paragraph"
     HEADING = "heading"
     CODE = "code"
     QUOTE = "quote"
-    ULIST = "unordered list"
-    OLIST = "ordered list"
+    OLIST = "ordered_list"
+    ULIST = "unordered_list"
+
 
 def markdown_to_blocks(markdown):
-    blocks = markdown.split('\n\n')
+    blocks = markdown.split("\n\n")
+    filtered_blocks = []
     for block in blocks:
-        if block == '':
-            blocks.remove(block)
-    for i in range(len(blocks)):
-        blocks[i] = blocks[i].strip()
+        if block == "":
+            continue
+        block = block.strip()
+        filtered_blocks.append(block)
+    return filtered_blocks
 
-    return blocks
 
 def block_to_block_type(block):
     lines = block.split("\n")
 
-    # check for heading
-    if re.match(r"^#{1,6}\s", block):
+    if block.startswith(("# ", "## ", "### ", "#### ", "##### ", "###### ")):
         return BlockType.HEADING
-    
-    # check for code
-    if block[:3] == "```" and block[-3:] == "```":
+    if len(lines) > 1 and lines[0].startswith("```") and lines[-1].startswith("```"):
         return BlockType.CODE
-    
-    # check for quote
-    quote = True
-    for line in lines:
-        if len(line) < 2 or line[:2] != "> ":
-            quote = False
-            break
-    if quote:
+    if block.startswith(">"):
+        for line in lines:
+            if not line.startswith(">"):
+                return BlockType.PARAGRAPH
         return BlockType.QUOTE
-
-    # check for unodered list
-    ulist = True
-    for line in lines:
-        if len(line) < 2 or line[:2] != "- ":
-            ulist = False
-            break
-    if ulist:
+    if block.startswith("- "):
+        for line in lines:
+            if not line.startswith("- "):
+                return BlockType.PARAGRAPH
         return BlockType.ULIST
-    
-    # check for odered list
-    olist = True
-    for i in range(len(lines)):
-        if len(lines[i]) < 3 or lines[i][:3] != f"{i+1}. ":
-            olist = False
-            break
-    if olist:
+    if block.startswith("1. "):
+        i = 1
+        for line in lines:
+            if not line.startswith(f"{i}. "):
+                return BlockType.PARAGRAPH
+            i += 1
         return BlockType.OLIST
-    
     return BlockType.PARAGRAPH
-    
+
+
 def markdown_to_html_node(markdown):
     blocks = markdown_to_blocks(markdown)
     children = []
